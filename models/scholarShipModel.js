@@ -1,0 +1,43 @@
+const mongoose = require("mongoose");
+
+const scholarshipSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    // Degree selection dropdown
+    degreeLevel: {
+      type: String,
+      enum: [
+        "Matric",
+        "Intermediate",
+        "Bachelor (BS)",
+        "Master (MS)",
+        "MPhil",
+        "PhD",
+      ],
+      required: [true, "Degree level is required"],
+    },
+
+    // Multiple uploaded documents
+    documents: [
+      {
+        fileName: String,  // original name
+        filePath: String,  // local path or relative URL
+        fileType: String,  // mimetype
+      },
+    ],
+
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Scholarship", scholarshipSchema);
