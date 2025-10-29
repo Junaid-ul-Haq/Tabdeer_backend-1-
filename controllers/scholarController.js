@@ -3,7 +3,7 @@ import User from "../models/userModel.js";
 import paginate from "../utils/paginate.js";
 
 // @desc Create scholarship application (User)
-exports.createScholarship = async (req, res) => {
+export const createScholarship = async (req, res) => {
   try {
     const { degreeLevel } = req.body; // updated field
 
@@ -61,7 +61,7 @@ exports.createScholarship = async (req, res) => {
 };
 
 // @desc Get logged-in user's scholarships
-exports.getMyScholarships = async (req, res) => {
+export const getMyScholarships = async (req, res) => {
   try {
     const applications = await Scholarship.find({ user: req.user._id })
       .sort({ createdAt: -1 })
@@ -78,7 +78,7 @@ exports.getMyScholarships = async (req, res) => {
 
 
 // @desc Get all scholarships with pagination (Admin only)
-exports.getAllScholarships = async (req, res) => {
+export const getAllScholarships = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -104,7 +104,7 @@ populate: { path: "user", select: "name email" }
 
 
 // @desc Update scholarship status (Admin only)
-exports.updateScholarshipStatus = async (req, res) => {
+export const updateScholarshipStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -131,7 +131,7 @@ exports.updateScholarshipStatus = async (req, res) => {
   }
 };
 // @desc Get detailed scholarship by ID (Admin)
-exports.getScholarshipById = async (req, res) => {
+export const getScholarshipById = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -163,7 +163,7 @@ const docs = (scholarship.documents || []).map((d) => ({
 };
 
 // @desc Get all allowed degree levels
-exports.getDegreeLevels = async (req, res) => {
+export const getDegreeLevels = async (req, res) => {
   try {
     // Read enum from Scholarship schema
     const degreeLevels = Scholarship.schema.path("degreeLevel").enumValues;

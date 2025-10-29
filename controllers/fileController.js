@@ -1,8 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import mime from 'mime-types';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-exports.getFile = async (req, res) => {
+export const getFile = async (req, res) => {
   try {
     const { folder, filename } = req.params;
     const filePath = path.join(__dirname, "..", "uploads", folder, filename);

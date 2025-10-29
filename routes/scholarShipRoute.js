@@ -1,15 +1,16 @@
 import express from "express";
-import router from express.Router();
-const {
+import {
   createScholarship,
   getMyScholarships,
   getAllScholarships,
   updateScholarshipStatus,
   getScholarshipById,
   getDegreeLevels,
-} = require("../controllers/scholarController");
-const { protect, authorize } = require("../middlewares/authMiddleware");
-const {upload} = require("../middlewares/uploadMulterMiddleware");
+} from "../controllers/scholarController.js";
+import { protect, authorize } from "../middlewares/authMiddleware.js";
+import { upload } from "../middlewares/uploadMulterMiddleware.js";
+
+const router = express.Router();
 
 // User submits scholarship (multiple files in one field "documents")
 // Scholarship route
@@ -31,4 +32,4 @@ router.patch("/updateScholarshipStatus/:id", protect, authorize("admin"), update
 router.get("/get/:id", protect, authorize("admin"), getScholarshipById);
 //degreelevel
 router.get("/degree-levels", protect, getDegreeLevels);
-module.exports = router;
+export default router;

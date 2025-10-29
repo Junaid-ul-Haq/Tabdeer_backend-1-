@@ -1,18 +1,16 @@
 // routes/consultationRoutes.js
 import express from "express";
-const {
+import {
   createConsultation,
   getMyConsultations,
   getAllConsultations,
   updateConsultationStatus,
-    getConsultationDetailsById,
-    getCategories,
-  
-} = require("../controllers/consultationController");
-
-const { protect, authorize } = require("../middlewares/authMiddleware");
-const { validateConsultation } = require("../middlewares/validationMiddleware");
-const { upload } = require("../middlewares/uploadMulterMiddleware");
+  getConsultationDetailsById,
+  getCategories,
+} from "../controllers/consultationController.js";
+import { protect, authorize } from "../middlewares/authMiddleware.js";
+import { validateConsultation } from "../middlewares/validationMiddleware.js";
+import { upload } from "../middlewares/uploadMulterMiddleware.js";
 
 const router = express.Router();
 
@@ -31,4 +29,4 @@ router.patch("/updateConsultationStatus/:id", protect, authorize("admin"), updat
 router.get("/getById/:id", protect, authorize("admin"), getConsultationDetailsById);
 //get catagories
 router.get("/categories", getCategories);
-module.exports = router;
+export default router;

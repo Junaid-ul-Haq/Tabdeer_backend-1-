@@ -3,7 +3,7 @@ import Consultation from "../models/consultationModel.js";
 // @desc Get all consultations (Admin) — populate full user info
 import paginate from "../utils/paginate.js";
 // @desc Create new consultation (User)
-exports.createConsultation = async (req, res) => {
+export const createConsultation = async (req, res) => {
   try {
     const { category, description } = req.body;
 
@@ -46,7 +46,7 @@ exports.createConsultation = async (req, res) => {
 };
 
 // @desc Get all consultations for logged-in user
-exports.getMyConsultations = async (req, res) => {
+export const getMyConsultations = async (req, res) => {
   try {
     const consultations = await Consultation.find({ user: req.user._id })
       .populate("user", "name email")
@@ -61,7 +61,7 @@ exports.getMyConsultations = async (req, res) => {
 
 
 // @desc Get all consultations with pagination (Admin only)
-exports.getAllConsultations = async (req, res) => {
+export const getAllConsultations = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;   // default page 1
     const limit = parseInt(req.query.limit) || 10; // default 10 records per page
@@ -87,7 +87,7 @@ populate: { path: "user", select: "name email" }
 };
 
 // @desc Update consultation status (Admin)
-exports.updateConsultationStatus = async (req, res) => {
+export const updateConsultationStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -115,7 +115,7 @@ exports.updateConsultationStatus = async (req, res) => {
 };
 
 // @desc Get detailed consultation + user info by consultation ID (Admin)
-exports.getConsultationDetailsById = async (req, res) => {
+export const getConsultationDetailsById = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -136,7 +136,7 @@ exports.getConsultationDetailsById = async (req, res) => {
 };
 // GET /consultation/categories
 
-exports.getCategories = async (req, res) => {
+export const getCategories = async (req, res) => {
   try {
     // Dynamically read enum values from Consultation schema
     const categories = Consultation.schema.path("category").enumValues;

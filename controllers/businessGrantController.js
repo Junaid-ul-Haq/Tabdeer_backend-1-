@@ -8,7 +8,7 @@ import { getRelativePath } from "../middlewares/uploadMulterMiddleware.js";
 // 📌 Create Business Grant (User)
 
 
-exports.createBusinessGrant = async (req, res) => {
+export const createBusinessGrant = async (req, res) => {
   try {
     const { title, description, amountRequested } = req.body;
 
@@ -78,7 +78,7 @@ exports.createBusinessGrant = async (req, res) => {
 };
 
 // 📌 Get logged-in user's Business Grants
-exports.getMyBusinessGrants = async (req, res) => {
+export const getMyBusinessGrants = async (req, res) => {
   try {
     const grants = await BusinessGrant.find({ user: req.user._id }).sort({ createdAt: -1 });
     const host = `${req.protocol}://${req.get("host")}`;
@@ -104,7 +104,7 @@ exports.getMyBusinessGrants = async (req, res) => {
 };
 
 // 📌 Get all Business Grants (Admin)
-exports.getAllBusinessGrants = async (req, res) => {
+export const getAllBusinessGrants = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -144,7 +144,7 @@ exports.getAllBusinessGrants = async (req, res) => {
 };
 
 // 📌 Get Business Grant by ID (Admin)
-exports.getBusinessGrantById = async (req, res) => {
+export const getBusinessGrantById = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -178,7 +178,7 @@ exports.getBusinessGrantById = async (req, res) => {
 };
 
 // 📌 Update Business Grant Status (Admin)
-exports.updateBusinessGrantStatus = async (req, res) => {
+export const updateBusinessGrantStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, adminNotes } = req.body;

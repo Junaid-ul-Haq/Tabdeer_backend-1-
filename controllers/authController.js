@@ -6,8 +6,11 @@ import generateToken from "../utils/generateToken.js";
 import { getRelativePath } from "../middlewares/uploadMulterMiddleware.js";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-exports.signup = async (req, res) => {
+export const signup = async (req, res) => {
   try {
     const { name, email, phone, password, confirmPassword, role } = req.body;
 
@@ -92,7 +95,7 @@ const cnicBack = `/files/signup/${cnicBackName}`;
 
 
 // ✅ Complete Profile
-exports.completeProfile = async (req, res) => {
+export const completeProfile = async (req, res) => {
   try {
     const { education, experience } = req.body;
 
@@ -116,7 +119,7 @@ exports.completeProfile = async (req, res) => {
 
 // @desc    Login user
 
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 

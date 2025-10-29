@@ -19,4 +19,4 @@ router.post(
 
 router.post("/login", login);
 router.put("/complete-profile", protect, completeProfile);
-module.exports = router;
+export default router;

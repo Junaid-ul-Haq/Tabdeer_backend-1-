@@ -1,16 +1,17 @@
 import express from "express";
-import router from express.Router();
 import path from "path";
 import fs from "fs";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
-const {
+import {
   createBusinessGrant,
   getMyBusinessGrants,
   getAllBusinessGrants,
   updateBusinessGrantStatus,
   getBusinessGrantById,
-} = require("../controllers/businessGrantController");
-const { upload } = require("../middlewares/uploadMulterMiddleware");
+} from "../controllers/businessGrantController.js";
+import { upload } from "../middlewares/uploadMulterMiddleware.js";
+
+const router = express.Router();
 
 // Create grant
 router.post(
@@ -36,4 +37,4 @@ router.get("/get/:id", protect, authorize("admin"), getBusinessGrantById);
 // NEW: Serve uploaded files securely
 
 
-module.exports = router;
+export default router;

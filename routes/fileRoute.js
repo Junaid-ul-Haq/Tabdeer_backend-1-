@@ -15,4 +15,4 @@ router.get("/:folder/:filename", protect, getFile);
 
 
 
-module.exports = router;
+export default router;
