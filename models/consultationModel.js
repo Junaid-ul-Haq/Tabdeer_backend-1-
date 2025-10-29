@@ -1,5 +1,5 @@
 // src/models/consultationModel.js
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const consultationSchema = new mongoose.Schema(
   {

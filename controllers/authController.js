@@ -1,9 +1,11 @@
-const User = require("../models/userModel");
-const bcrypt = require("bcryptjs");
-const generateToken = require("../utils/generateToken");
-const { getRelativePath } = require("../middlewares/uploadMulterMiddleware");
-const path = require("path");
-const fs = require("fs");
+import User from "../models/userModel.js";
+import bcrypt from "bcryptjs";
+
+import generateToken from "../utils/generateToken.js";
+
+import { getRelativePath } from "../middlewares/uploadMulterMiddleware.js";
+import path from "path";
+import fs from "fs";
 
 exports.signup = async (req, res) => {
   try {

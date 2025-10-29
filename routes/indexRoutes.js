@@ -1,11 +1,11 @@
 // routes/index.js
-const express = require("express");
-const router = express.Router();
-const authRoutes = require("./authRoutes");
-const consultationRoutes = require ("./consultationRoutes");
-const scholarshipRoutes = require("./scholarShipRoute");
-const businessGrantRoutes = require("./businessGrantRoutes");
-const fileRoutes = require("./fileRoute");
+import express from "express";
+import router from express.Router();
+import authRoutes from "./authRoutes.js";
+import consultationRoutes from "./consultationRoutes.js";
+import scholarshipRoutes from "./scholarShipRoute.js";
+import businessGrantRoutes from "./businessGrantRoutes.js";
+import fileRoutes from "./fileRoute.js";
 //Use Routes
 router.use("/auth", authRoutes);
 router.use("/consultation",consultationRoutes)

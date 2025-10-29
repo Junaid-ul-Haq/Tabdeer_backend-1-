@@ -1,5 +1,5 @@
-const express = require("express");
-const router = express.Router();
+import express from "express";
+import router from express.Router();
 const {
   createScholarship,
   getMyScholarships,

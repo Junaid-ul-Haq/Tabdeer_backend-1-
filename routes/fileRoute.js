@@ -1,6 +1,6 @@
-const express = require("express");
-const { protect, authorize } = require("../middlewares/authMiddleware");
-const { getFile } = require("../controllers/fileController");
+import express from "express";
+import { protect, authorize } from "../middlewares/authMiddleware.js";
+import { getFile } from "../controllers/fileController.js";
 
 const router = express.Router();
 

@@ -1,7 +1,7 @@
 // src/controllers/consultationController.js
-const Consultation = require("../models/consultationModel");
+import Consultation from "../models/consultationModel.js";
 // @desc Get all consultations (Admin) — populate full user info
-const paginate = require("../utils/paginate");
+import paginate from "../utils/paginate.js";
 // @desc Create new consultation (User)
 exports.createConsultation = async (req, res) => {
   try {

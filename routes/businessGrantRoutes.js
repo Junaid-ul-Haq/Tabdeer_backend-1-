@@ -1,8 +1,8 @@
-const express = require("express");
-const router = express.Router();
-const path = require("path");
-const fs = require("fs");
-const { protect, authorize } = require("../middlewares/authMiddleware");
+import express from "express";
+import router from express.Router();
+import path from "path";
+import fs from "fs";
+import { protect, authorize } from "../middlewares/authMiddleware.js";
 const {
   createBusinessGrant,
   getMyBusinessGrants,

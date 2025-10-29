@@ -1,9 +1,9 @@
-const BusinessGrant = require("../models/businessGrantModel");
-const User = require("../models/userModel");
-const paginate = require("../utils/paginate");
-const path = require("path");
-const fs = require("fs");
-const { getRelativePath } = require("../middlewares/uploadMulterMiddleware");
+import BusinessGrant from "../models/businessGrantModel.js";
+import User from "../models/userModel.js";
+import paginate from "../utils/paginate.js";
+import path from "path";
+import fs from "fs";
+import { getRelativePath } from "../middlewares/uploadMulterMiddleware.js";
 
 // 📌 Create Business Grant (User)
 

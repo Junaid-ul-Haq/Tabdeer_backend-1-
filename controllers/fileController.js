@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const mime = require('mime-types');
+import fs from 'fs';
+import path from 'path';
+import mime from 'mime-types';
 
 exports.getFile = async (req, res) => {
   try {

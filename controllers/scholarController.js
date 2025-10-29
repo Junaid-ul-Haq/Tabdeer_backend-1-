@@ -1,6 +1,6 @@
-const Scholarship = require("../models/scholarShipModel");
-const User = require("../models/userModel");
-const paginate = require("../utils/paginate");
+import Scholarship from "../models/scholarShipModel.js";
+import User from "../models/userModel.js";
+import paginate from "../utils/paginate.js";
 
 // @desc Create scholarship application (User)
 exports.createScholarship = async (req, res) => {
