@@ -49,4 +49,4 @@ const consultationSchema = new mongoose.Schema(
 );
 
 const Consultation = mongoose.model("Consultation", consultationSchema);
-module.exports = Consultation;
+export default Consultation;

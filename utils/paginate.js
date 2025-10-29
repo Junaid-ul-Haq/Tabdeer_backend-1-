@@ -37,4 +37,4 @@ const paginate = async (model, query = {}, options = {}) => {
   };
 };
 
-module.exports = paginate;
+export default paginate;

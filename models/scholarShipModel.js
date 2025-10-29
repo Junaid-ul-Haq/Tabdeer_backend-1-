@@ -40,4 +40,4 @@ const scholarshipSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Scholarship", scholarshipSchema);
+export default mongoose.model("Scholarship", scholarshipSchema);

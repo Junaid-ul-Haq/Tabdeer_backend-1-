@@ -55,4 +55,4 @@ const businessGrantSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("BusinessGrant", businessGrantSchema);
+export default mongoose.model("BusinessGrant", businessGrantSchema);
