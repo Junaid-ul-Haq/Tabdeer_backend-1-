@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import connectDB from "./config/db.js";
+import mongoose from "mongoose";
+import connectDB, { isMongoConnected } from "./config/db.js";
 import routes from "./routes/indexRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -62,9 +63,6 @@ app.use(
 
 app.use(express.json());
 
-// ✅ Handle preflight OPTIONS requests explicitly
-app.options("*", cors());
-
 // ✅ Serve uploaded files
 app.use("/files", express.static(path.join(__dirname, "uploads")));
 
@@ -72,6 +70,28 @@ app.use("/files", express.static(path.join(__dirname, "uploads")));
 connectDB().catch((error) => {
   console.error("Failed to connect to MongoDB:", error);
   process.exit(1);
+});
+
+// ✅ MongoDB connection check middleware
+app.use((req, res, next) => {
+  // Skip connection check for health check routes
+  if (req.path === '/' || req.path === '/health') {
+    return next();
+  }
+  
+  const connectionState = mongoose.connection.readyState;
+  // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+  
+  if (connectionState !== 1) {
+    console.error(`❌ MongoDB not connected. State: ${connectionState} for ${req.method} ${req.path}`);
+    return res.status(503).json({
+      success: false,
+      message: "Database connection unavailable. Please try again later.",
+      connectionState: connectionState
+    });
+  }
+  
+  next();
 });
 
 // ✅ Add request logging middleware
