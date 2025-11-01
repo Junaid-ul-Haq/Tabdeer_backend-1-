@@ -104,6 +104,28 @@ app.use((req, res, next) => {
 // ✅ Use all routes
 app.use("/", routes);
 
+// ✅ Health check endpoint
+app.get("/health", (req, res) => {
+  const mongoState = mongoose.connection.readyState;
+  const mongoStates = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting"
+  };
+  
+  res.json({
+    status: "ok",
+    message: "🚀 Tadbeer Backend API is running...",
+    timestamp: new Date().toISOString(),
+    mongodb: {
+      status: mongoStates[mongoState] || "unknown",
+      readyState: mongoState
+    },
+    environment: process.env.NODE_ENV || "development"
+  });
+});
+
 // ✅ Test route
 app.get("/", (req, res) => {
   res.send("🚀 Tadbeer Backend API is running...");
