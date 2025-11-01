@@ -12,13 +12,10 @@ const connectDB = async () => {
     console.log("🔄 Attempting to connect to MongoDB...");
     console.log("Connection string:", process.env.MONGO_URI.replace(/\/\/[^:]+:[^@]+@/, "//***:***@")); // Hide password
 
-    // Configure Mongoose buffering - allow buffering for better connection handling
-    mongoose.set('bufferCommands', true);
-
     const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 30000, // 30 seconds timeout (increased for external access)
-      socketTimeoutMS: 60000, // 60 seconds socket timeout (increased)
-      connectTimeoutMS: 30000, // 30 seconds connection timeout (increased)
+      serverSelectionTimeoutMS: 15000, // 15 seconds timeout
+      socketTimeoutMS: 45000, // 45 seconds socket timeout
+      connectTimeoutMS: 15000, // 15 seconds connection timeout
       maxPoolSize: 10, // Maximum number of connections
       retryWrites: true,
       w: 'majority',
@@ -63,32 +60,11 @@ mongoose.connection.on('error', (err) => {
 });
 
 mongoose.connection.on('disconnected', () => {
-  console.warn('⚠️  MongoDB disconnected - attempting to reconnect...');
-  // Automatically reconnect
-  mongoose.connect(process.env.MONGO_URI, {
-    serverSelectionTimeoutMS: 30000,
-    socketTimeoutMS: 60000,
-    connectTimeoutMS: 30000,
-  }).catch(err => {
-    console.error('❌ Reconnection failed:', err);
-  });
+  console.warn('⚠️  MongoDB disconnected');
 });
 
 mongoose.connection.on('reconnected', () => {
-  console.log('✅ MongoDB reconnected successfully');
+  console.log('✅ MongoDB reconnected');
 });
-
-mongoose.connection.on('connecting', () => {
-  console.log('🔄 MongoDB connecting...');
-});
-
-mongoose.connection.on('connected', () => {
-  console.log('✅ MongoDB connected');
-});
-
-// Helper function to check if MongoDB is connected
-export const isMongoConnected = () => {
-  return mongoose.connection.readyState === 1; // 1 = connected
-};
 
 export default connectDB;

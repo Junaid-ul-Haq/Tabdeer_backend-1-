@@ -3,8 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import mongoose from "mongoose";
-import connectDB, { isMongoConnected } from "./config/db.js";
+import connectDB from "./config/db.js";
 import routes from "./routes/indexRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -72,28 +71,6 @@ connectDB().catch((error) => {
   process.exit(1);
 });
 
-// ✅ MongoDB connection check middleware
-app.use((req, res, next) => {
-  // Skip connection check for health check routes
-  if (req.path === '/' || req.path === '/health') {
-    return next();
-  }
-  
-  const connectionState = mongoose.connection.readyState;
-  // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
-  
-  if (connectionState !== 1) {
-    console.error(`❌ MongoDB not connected. State: ${connectionState} for ${req.method} ${req.path}`);
-    return res.status(503).json({
-      success: false,
-      message: "Database connection unavailable. Please try again later.",
-      connectionState: connectionState
-    });
-  }
-  
-  next();
-});
-
 // ✅ Add request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -103,28 +80,6 @@ app.use((req, res, next) => {
 
 // ✅ Use all routes
 app.use("/", routes);
-
-// ✅ Health check endpoint
-app.get("/health", (req, res) => {
-  const mongoState = mongoose.connection.readyState;
-  const mongoStates = {
-    0: "disconnected",
-    1: "connected",
-    2: "connecting",
-    3: "disconnecting"
-  };
-  
-  res.json({
-    status: "ok",
-    message: "🚀 Tadbeer Backend API is running...",
-    timestamp: new Date().toISOString(),
-    mongodb: {
-      status: mongoStates[mongoState] || "unknown",
-      readyState: mongoState
-    },
-    environment: process.env.NODE_ENV || "development"
-  });
-});
 
 // ✅ Test route
 app.get("/", (req, res) => {
