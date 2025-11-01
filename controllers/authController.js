@@ -84,7 +84,15 @@ const cnicBack = `/files/signup/${cnicBackName}`;
     });
   } catch (error) {
     console.error("Signup Error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("Error Details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
+    res.status(500).json({ 
+      message: error.message || "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
   }
 };
 
