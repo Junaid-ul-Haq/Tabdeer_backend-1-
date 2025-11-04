@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 export const signup = async (req, res) => {
   try {
-    const { name, email, phone, password, confirmPassword, role } = req.body;
+    const { name, email, phone, password, confirmPassword, role, adminSecretKey } = req.body;
 
     // Ensure files are uploaded
     const cnicFrontFile = req.files?.cnicFront?.[0];
@@ -28,6 +28,40 @@ export const signup = async (req, res) => {
 
     if (password !== confirmPassword) {
       return res.status(400).json({ message: "Passwords do not match." });
+    }
+
+    // 🔒 SECURITY: Validate admin registration
+    let finalRole = "user"; // Default to user
+    if (role === "admin") {
+      // Check if admin secret key is provided and valid
+      // Read from environment variable
+      const validAdminKey = process.env.ADMIN_SECRET_KEY;
+      
+      // Debug logging (remove in production)
+      if (process.env.NODE_ENV === "development") {
+        console.log("🔐 Admin Registration Attempt:");
+        console.log("   - Provided key:", adminSecretKey ? "***" + adminSecretKey.slice(-4) : "MISSING");
+        console.log("   - Expected key:", validAdminKey ? "***" + validAdminKey.slice(-4) : "NOT SET (using default)");
+      }
+      
+      // If no env variable set, use default (for backwards compatibility)
+      const keyToCompare = validAdminKey || "TADBEER_ADMIN_2024_SECRET";
+      
+      if (!adminSecretKey) {
+        return res.status(403).json({ 
+          message: "Admin secret key is required to register as admin." 
+        });
+      }
+      
+      if (adminSecretKey !== keyToCompare) {
+        return res.status(403).json({ 
+          message: "Invalid admin secret key. Admin registration is restricted." 
+        });
+      }
+      
+      // Secret key is valid, allow admin registration
+      finalRole = "admin";
+      console.log("✅ Admin registration successful for:", email);
     }
 
     // Hash password
@@ -57,10 +91,10 @@ const cnicBack = `/files/signup/${cnicBackName}`;
       email,
       phone,
       password: hashedPassword,
-      role: role || "user",
+      role: finalRole, // Use validated role
       cnicFront,
       cnicBack,
-      chancesLeft: 3,
+      chancesLeft: finalRole === "admin" ? undefined : 3, // Admin doesn't need chances
       profileCompleted: false,
     });
 

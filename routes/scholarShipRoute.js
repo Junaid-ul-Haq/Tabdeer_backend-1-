@@ -6,6 +6,13 @@ import {
   updateScholarshipStatus,
   getScholarshipById,
   getDegreeLevels,
+  createScholarshipOpportunity,
+  getAllScholarshipOpportunities,
+  getScholarshipOpportunitiesByFilter,
+  updateScholarshipOpportunity,
+  deleteScholarshipOpportunity,
+  getAllCourses,
+  getAllCountries,
 } from "../controllers/scholarController.js";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
 import { upload } from "../middlewares/uploadMulterMiddleware.js";
@@ -32,4 +39,30 @@ router.patch("/updateScholarshipStatus/:id", protect, authorize("admin"), update
 router.get("/get/:id", protect, authorize("admin"), getScholarshipById);
 //degreelevel
 router.get("/degree-levels", protect, getDegreeLevels);
+
+// ==========================================
+// SCHOLARSHIP OPPORTUNITIES ROUTES
+// ==========================================
+
+// Admin: Create scholarship opportunity
+router.post("/opportunities/create", protect, authorize("admin"), createScholarshipOpportunity);
+
+// Admin: Get all opportunities (with pagination and search)
+router.get("/opportunities", protect, authorize("admin"), getAllScholarshipOpportunities);
+
+// User: Get opportunities filtered by degree and course
+router.get("/opportunities/search", protect, getScholarshipOpportunitiesByFilter);
+
+// Admin: Update opportunity
+router.put("/opportunities/:id", protect, authorize("admin"), updateScholarshipOpportunity);
+
+// Admin: Delete opportunity
+router.delete("/opportunities/:id", protect, authorize("admin"), deleteScholarshipOpportunity);
+
+// Get all unique courses (for dropdowns)
+router.get("/courses", protect, getAllCourses);
+
+// Get all unique countries (for dropdowns)
+router.get("/countries", protect, getAllCountries);
+
 export default router;

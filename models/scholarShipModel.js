@@ -22,6 +22,13 @@ const scholarshipSchema = new mongoose.Schema(
       required: [true, "Degree level is required"],
     },
 
+    // Course/Field of study
+    course: {
+      type: String,
+      required: [true, "Course is required"],
+      trim: true,
+    },
+
     // Multiple uploaded documents
     documents: [
       {
