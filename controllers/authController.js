@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 export const signup = async (req, res) => {
   try {
-    const { name, email, phone, password, confirmPassword, role, adminSecretKey } = req.body;
+    const { name, email, phone, password, confirmPassword, cnicNumber, address, role, adminSecretKey } = req.body;
 
     // Ensure files are uploaded
     const cnicFrontFile = req.files?.cnicFront?.[0];
@@ -22,9 +22,22 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "CNIC front and back images are required." });
     }
 
+    // Validate CNIC number format (XXXXX-XXXXXXX-X)
+    if (!cnicNumber || !/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/.test(cnicNumber)) {
+      return res.status(400).json({ message: "Invalid CNIC format. Use XXXXX-XXXXXXX-X" });
+    }
+
+    if (!address || address.trim().length === 0) {
+      return res.status(400).json({ message: "Address is required." });
+    }
+
     // Check if email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: "Email already exists." });
+
+    // Check if CNIC already exists
+    const existingCNIC = await User.findOne({ CNIC: cnicNumber });
+    if (existingCNIC) return res.status(400).json({ message: "CNIC number already registered." });
 
     if (password !== confirmPassword) {
       return res.status(400).json({ message: "Passwords do not match." });
@@ -90,6 +103,8 @@ const cnicBack = `/files/signup/${cnicBackName}`;
       name,
       email,
       phone,
+      CNIC: cnicNumber,
+      address: address.trim(),
       password: hashedPassword,
       role: finalRole, // Use validated role
       cnicFront,
@@ -110,6 +125,8 @@ const cnicBack = `/files/signup/${cnicBackName}`;
         name: newUser.name,
         email: newUser.email,
         phone: newUser.phone,
+        CNIC: newUser.CNIC,
+        address: newUser.address,
         role: newUser.role,
         profileCompleted: newUser.profileCompleted,
         cnicFront,
@@ -146,6 +163,7 @@ export const completeProfile = async (req, res) => {
 
     user.education = education;
     user.experience = experience;
+    user.profileCompleted = true; // Mark profile as completed
     await user.save();
 
     res.status(200).json({
@@ -183,6 +201,14 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Check if payment is verified (for users only)
+    if (user.role === "user" && !user.paymentVerified) {
+      return res.status(403).json({
+        message: "Payment verification pending. Please wait for admin approval.",
+        paymentPending: true,
+      });
+    }
+
     // generate token after successful login
     const token = generateToken(user._id, user.role);
 
@@ -194,6 +220,8 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        profileCompleted: user.profileCompleted,
+        paymentVerified: user.paymentVerified,
         chancesLeft: user.chancesLeft,
       },
     });

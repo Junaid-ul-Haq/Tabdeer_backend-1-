@@ -18,6 +18,19 @@ const userSchema = new mongoose.Schema(
       required: [true, "Phone number is required"],
       match: [/^(\+92|0)?[0-9]{10,11}$/, "Invalid phone number"],
     },
+    CNIC: {
+      type: String,
+      required: [true, "CNIC number is required"],
+      match: [/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/, "Invalid CNIC format. Use XXXXX-XXXXXXX-X"],
+      unique: true,
+      trim: true,
+    },
+    address: {
+      type: String,
+      required: [true, "Address is required"],
+      trim: true,
+      maxlength: 500,
+    },
     password: {
       type: String,
       required: [true, "Password is required"],
@@ -60,6 +73,11 @@ const userSchema = new mongoose.Schema(
   ],
 
     profileCompleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    paymentVerified: {
       type: Boolean,
       default: false,
     },

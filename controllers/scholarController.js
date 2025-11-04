@@ -6,7 +6,7 @@ import paginate from "../utils/paginate.js";
 // @desc Create scholarship application (User)
 export const createScholarship = async (req, res) => {
   try {
-    const { degreeLevel, course } = req.body; // updated fields
+    const { degreeLevel, course, opportunityId } = req.body; // updated fields
 
     // ✅ Find user
     const user = await User.findById(req.user._id);
@@ -23,19 +23,24 @@ export const createScholarship = async (req, res) => {
     }
 
     // ✅ Handle uploaded files
-    const documents =
-  req.files?.map((file) => {
-    // Determine folder name from multer storage (e.g., "scholarships")
-    const folder = "scholarships";
+    // Combine all files: passport, experienceDocuments, and documents
+    const allFiles = [
+      ...(req.files?.passport || []),
+      ...(req.files?.experienceDocuments || []),
+      ...(req.files?.documents || []),
+    ];
 
-    return {
-      fileName: file.originalname,
-      fileType: file.mimetype,
-      // Store relative URL path like CNIC
-      filePath: `/files/${folder}/${file.filename}`,
-    };
-  }) || [];
+    const documents = allFiles.map((file) => {
+      // Determine folder name from multer storage (e.g., "scholarships")
+      const folder = "scholarships";
 
+      return {
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        // Store relative URL path like CNIC
+        filePath: `/files/${folder}/${file.filename}`,
+      };
+    });
 
     // ✅ Create application
     const application = await Scholarship.create({
@@ -43,6 +48,7 @@ export const createScholarship = async (req, res) => {
       degreeLevel,
       course,
       documents,
+      opportunityId: opportunityId || null, // Link to opportunity if provided
     });
 
     // ✅ Decrease user's chances left
@@ -276,6 +282,115 @@ export const getScholarshipOpportunitiesByFilter = async (req, res) => {
       success: true,
       opportunities,
       count: opportunities.length,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc Get all active scholarship opportunities for users (User)
+export const getAllActiveOpportunities = async (req, res) => {
+  try {
+    const opportunities = await ScholarshipOpportunity.find({
+      isActive: true,
+    })
+      .sort({ createdAt: -1 })
+      .populate("createdBy", "name email");
+
+    res.status(200).json({
+      success: true,
+      opportunities,
+      count: opportunities.length,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc Get scholarship opportunities based on logged-in user's profile (User)
+export const getMyScholarshipOpportunities = async (req, res) => {
+  try {
+    // Get user with full profile
+    const user = await User.findById(req.user._id).select("education experience");
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Extract degree level and course from user's education
+    // Get the latest/highest education (assuming last one is highest)
+    const latestEducation = user.education && user.education.length > 0 
+      ? user.education[user.education.length - 1] 
+      : null;
+
+    if (!latestEducation || !latestEducation.degree) {
+      return res.status(200).json({
+        success: true,
+        opportunities: [],
+        count: 0,
+        message: "Please complete your profile with education details first",
+      });
+    }
+
+    // Extract degree level from degree string (e.g., "Bachelor in Computer Science" -> "Bachelor (BS)")
+    const degreeString = latestEducation.degree.toLowerCase();
+    let degreeLevel = "";
+    
+    if (degreeString.includes("matric") || degreeString.includes("matriculation")) {
+      degreeLevel = "Matric";
+    } else if (degreeString.includes("intermediate") || degreeString.includes("fsc") || degreeString.includes("fa")) {
+      degreeLevel = "Intermediate";
+    } else if (degreeString.includes("bachelor") || degreeString.includes("bs") || degreeString.includes("bsc")) {
+      degreeLevel = "Bachelor (BS)";
+    } else if (degreeString.includes("master") || degreeString.includes("ms") || degreeString.includes("msc")) {
+      degreeLevel = "Master (MS)";
+    } else if (degreeString.includes("mphil")) {
+      degreeLevel = "MPhil";
+    } else if (degreeString.includes("phd") || degreeString.includes("doctorate")) {
+      degreeLevel = "PhD";
+    } else {
+      // Default to Bachelor if cannot determine
+      degreeLevel = "Bachelor (BS)";
+    }
+
+    // Extract course from degree string (e.g., "Bachelor in Computer Science" -> "Computer Science")
+    let course = "";
+    if (degreeString.includes("in ") || degreeString.includes("of ")) {
+      const parts = latestEducation.degree.split(/in |of /i);
+      if (parts.length > 1) {
+        course = parts[parts.length - 1].trim();
+      }
+    } else {
+      // If no "in" or "of", try to extract after common degree names
+      course = latestEducation.degree.replace(/bachelor|master|bs|ms|mphil|phd|degree/gi, "").trim();
+    }
+
+    // If course is still empty, use the full degree string
+    if (!course || course.length < 3) {
+      course = latestEducation.degree;
+    }
+
+    // Search opportunities matching user's degree and course
+    const opportunities = await ScholarshipOpportunity.find({
+      degreeLevel,
+      course: { $regex: new RegExp(course.split(" ")[0], "i") }, // Match first word of course
+      isActive: true,
+    })
+      .sort({ createdAt: -1 })
+      .populate("createdBy", "name");
+
+    res.status(200).json({
+      success: true,
+      opportunities,
+      count: opportunities.length,
+      userProfile: {
+        degreeLevel,
+        course,
+        education: latestEducation.degree,
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

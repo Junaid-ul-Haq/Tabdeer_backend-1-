@@ -29,6 +29,13 @@ const scholarshipSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Link to scholarship opportunity (if applied from opportunity)
+    opportunityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ScholarshipOpportunity",
+      default: null,
+    },
+
     // Multiple uploaded documents
     documents: [
       {

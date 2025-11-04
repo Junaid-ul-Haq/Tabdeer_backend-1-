@@ -51,6 +51,20 @@ const businessGrantSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+
+    // Link to grant opportunity (if applied from opportunity)
+    opportunityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BusinessGrantOpportunity",
+      default: null,
+    },
+
+    // Proposal text (if provided as text instead of file)
+    proposalText: {
+      type: String,
+      trim: true,
+      maxlength: 5000,
+    },
   },
   { timestamps: true }
 );

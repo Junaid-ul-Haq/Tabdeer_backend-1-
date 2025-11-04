@@ -8,6 +8,11 @@ import {
   getAllBusinessGrants,
   updateBusinessGrantStatus,
   getBusinessGrantById,
+  createGrantOpportunity,
+  getAllGrantOpportunities,
+  getAllActiveGrantOpportunities,
+  updateGrantOpportunity,
+  deleteGrantOpportunity,
 } from "../controllers/businessGrantController.js";
 import { upload } from "../middlewares/uploadMulterMiddleware.js";
 
@@ -33,6 +38,25 @@ router.patch(
   updateBusinessGrantStatus
 );
 router.get("/get/:id", protect, authorize("admin"), getBusinessGrantById);
+
+// ==========================================
+// BUSINESS GRANT OPPORTUNITIES ROUTES
+// ==========================================
+
+// Admin: Create grant opportunity
+router.post("/opportunities/create", protect, authorize("admin"), createGrantOpportunity);
+
+// Admin: Get all opportunities (with pagination and search)
+router.get("/opportunities", protect, authorize("admin"), getAllGrantOpportunities);
+
+// User: Get all active opportunities
+router.get("/opportunities/all", protect, getAllActiveGrantOpportunities);
+
+// Admin: Update opportunity
+router.put("/opportunities/:id", protect, authorize("admin"), updateGrantOpportunity);
+
+// Admin: Delete opportunity
+router.delete("/opportunities/:id", protect, authorize("admin"), deleteGrantOpportunity);
 
 // NEW: Serve uploaded files securely
 

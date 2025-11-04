@@ -21,6 +21,7 @@ const storage = multer.diskStorage({
     if (req.baseUrl.includes("auth")) folder = "uploads/signup";
     if (req.baseUrl.includes("scholarship")) folder = "uploads/scholarships";
     if (req.baseUrl.includes("business")) folder = "uploads/businessGrants";
+    if (req.baseUrl.includes("payment")) folder = "uploads/payments";
     if (req.baseUrl.includes("consultation")) folder = "uploads/others";
 
 

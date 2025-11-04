@@ -1,4 +1,5 @@
 import BusinessGrant from "../models/businessGrantModel.js";
+import BusinessGrantOpportunity from "../models/businessGrantOpportunityModel.js";
 import User from "../models/userModel.js";
 import paginate from "../utils/paginate.js";
 import path from "path";
@@ -10,7 +11,7 @@ import { getRelativePath } from "../middlewares/uploadMulterMiddleware.js";
 
 export const createBusinessGrant = async (req, res) => {
   try {
-    const { title, description, amountRequested } = req.body;
+    const { title, description, proposal: proposalText, opportunityId } = req.body;
 
     if (!title || !description) {
       return res.status(400).json({
@@ -32,7 +33,7 @@ export const createBusinessGrant = async (req, res) => {
       });
     }
 
-    // ✅ Handle uploaded proposal
+    // ✅ Handle uploaded proposal file
     let proposal = null;
     if (req.file) {
       // Ensure forward slashes for Windows paths
@@ -55,8 +56,9 @@ export const createBusinessGrant = async (req, res) => {
       user: req.user._id,
       title,
       description,
-      amountRequested,
-      proposal,
+      proposal: proposal || null,
+      proposalText: proposalText || null, // Store text proposal if provided
+      opportunityId: opportunityId || null, // Link to opportunity if provided
     });
 
     // ✅ Reduce user chances
@@ -203,6 +205,148 @@ export const updateBusinessGrantStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error updating business grant status:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ==========================================
+// BUSINESS GRANT OPPORTUNITIES (Admin)
+// ==========================================
+
+// @desc Create business grant opportunity (Admin)
+export const createGrantOpportunity = async (req, res) => {
+  try {
+    const { city, amount, description } = req.body;
+
+    if (!city || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: "City and amount are required",
+      });
+    }
+
+    const opportunity = await BusinessGrantOpportunity.create({
+      city,
+      amount: parseFloat(amount),
+      description: description || "",
+      createdBy: req.user._id,
+      isActive: true,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Business grant opportunity created successfully",
+      opportunity,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc Get all business grant opportunities (Admin)
+export const getAllGrantOpportunities = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
+
+    let query = {};
+    if (search) {
+      query = {
+        $or: [
+          { city: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+        ],
+      };
+    }
+
+    const result = await paginate(BusinessGrantOpportunity, query, {
+      page,
+      limit,
+      sort: { createdAt: -1 },
+      populate: { path: "createdBy", select: "name email" },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: result.data,
+      page: result.page,
+      totalPages: result.totalPages,
+      totalRecords: result.total,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc Get all active grant opportunities for users
+export const getAllActiveGrantOpportunities = async (req, res) => {
+  try {
+    const opportunities = await BusinessGrantOpportunity.find({
+      isActive: true,
+    })
+      .sort({ createdAt: -1 })
+      .populate("createdBy", "name email");
+
+    res.status(200).json({
+      success: true,
+      opportunities,
+      count: opportunities.length,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc Update grant opportunity (Admin)
+export const updateGrantOpportunity = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { city, amount, description, isActive } = req.body;
+
+    const opportunity = await BusinessGrantOpportunity.findById(id);
+    if (!opportunity) {
+      return res.status(404).json({
+        success: false,
+        message: "Grant opportunity not found",
+      });
+    }
+
+    if (city) opportunity.city = city;
+    if (amount !== undefined) opportunity.amount = parseFloat(amount);
+    if (description !== undefined) opportunity.description = description;
+    if (isActive !== undefined) opportunity.isActive = isActive;
+
+    await opportunity.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Grant opportunity updated successfully",
+      opportunity,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc Delete grant opportunity (Admin)
+export const deleteGrantOpportunity = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const opportunity = await BusinessGrantOpportunity.findByIdAndDelete(id);
+    if (!opportunity) {
+      return res.status(404).json({
+        success: false,
+        message: "Grant opportunity not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Grant opportunity deleted successfully",
+    });
+  } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };

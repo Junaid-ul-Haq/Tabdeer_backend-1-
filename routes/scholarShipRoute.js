@@ -9,6 +9,8 @@ import {
   createScholarshipOpportunity,
   getAllScholarshipOpportunities,
   getScholarshipOpportunitiesByFilter,
+  getAllActiveOpportunities,
+  getMyScholarshipOpportunities,
   updateScholarshipOpportunity,
   deleteScholarshipOpportunity,
   getAllCourses,
@@ -19,12 +21,16 @@ import { upload } from "../middlewares/uploadMulterMiddleware.js";
 
 const router = express.Router();
 
-// User submits scholarship (multiple files in one field "documents")
-// Scholarship route
+// User submits scholarship (multiple files in different fields)
+// Scholarship route - handles passport, experienceDocuments, and documents
 router.post(
   "/createScholarship",
   protect,
-  upload.array("documents", 10),  // multiple files under single field
+  upload.fields([
+    { name: "passport", maxCount: 1 },
+    { name: "experienceDocuments", maxCount: 3 },
+    { name: "documents", maxCount: 50 }, // No limit for all documents
+  ]),
   createScholarship
 );
 // User views their own scholarships
@@ -50,8 +56,14 @@ router.post("/opportunities/create", protect, authorize("admin"), createScholars
 // Admin: Get all opportunities (with pagination and search)
 router.get("/opportunities", protect, authorize("admin"), getAllScholarshipOpportunities);
 
+// User: Get all active opportunities (all available scholarships)
+router.get("/opportunities/all", protect, getAllActiveOpportunities);
+
 // User: Get opportunities filtered by degree and course
 router.get("/opportunities/search", protect, getScholarshipOpportunitiesByFilter);
+
+// User: Get opportunities based on logged-in user's profile
+router.get("/opportunities/my-opportunities", protect, getMyScholarshipOpportunities);
 
 // Admin: Update opportunity
 router.put("/opportunities/:id", protect, authorize("admin"), updateScholarshipOpportunity);
