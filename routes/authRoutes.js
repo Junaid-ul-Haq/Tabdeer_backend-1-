@@ -1,7 +1,7 @@
 import express from "express";
-import { signup, login,completeProfile } from "../controllers/authController.js";
+import { signup, login, completeProfile, getAllUsers, getUserById } from "../controllers/authController.js";
 import { upload } from "../middlewares/uploadMulterMiddleware.js";
-import { protect } from "../middlewares/authMiddleware.js";
+import { protect, authorize } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -19,4 +19,9 @@ router.post(
 
 router.post("/login", login);
 router.put("/complete-profile", protect, completeProfile);
+
+// Admin routes
+router.get("/users", protect, authorize("admin"), getAllUsers);
+router.get("/users/:id", protect, authorize("admin"), getUserById);
+
 export default router;

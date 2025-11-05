@@ -82,10 +82,17 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    creditHours: {
+      type: Number,
+      default: function () {
+        return this.role === "user" ? 0 : undefined; // Users start with 0, get 3 after first payment
+      },
+    },
+    // Keep chancesLeft for backward compatibility (will be deprecated)
     chancesLeft: {
       type: Number,
       default: function () {
-        return this.role === "user" ? 3 : undefined;
+        return this.role === "user" ? 0 : undefined;
       },
     },
   },

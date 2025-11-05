@@ -154,6 +154,94 @@ const cnicBack = `/files/signup/${cnicBackName}`;
 
 
 // ✅ Complete Profile
+// @desc Get all users (Admin only)
+export const getAllUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
+
+    // Build search query
+    let query = { role: "user" }; // Only get users, not admins
+    
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+        { CNIC: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const total = await User.countDocuments(query);
+    const users = await User.find(query)
+      .select("-password")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: users,
+      page,
+      totalPages,
+      totalRecords: total,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc Get single user details (Admin only)
+export const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).select("-password");
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Get user's applications
+    const Scholarship = (await import("../models/scholarShipModel.js")).default;
+    const BusinessGrant = (await import("../models/businessGrantModel.js")).default;
+    const Consultation = (await import("../models/consultationModel.js")).default;
+    const Payment = (await import("../models/paymentModel.js")).default;
+
+    const [scholarships, grants, consultations, payment] = await Promise.all([
+      Scholarship.find({ user: id }),
+      BusinessGrant.find({ user: id }),
+      Consultation.find({ user: id }),
+      Payment.findOne({ user: id }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      user,
+      applications: {
+        scholarships,
+        grants,
+        consultations,
+        payment,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export const completeProfile = async (req, res) => {
   try {
     const { education, experience } = req.body;
@@ -222,7 +310,8 @@ export const login = async (req, res) => {
         role: user.role,
         profileCompleted: user.profileCompleted,
         paymentVerified: user.paymentVerified,
-        chancesLeft: user.chancesLeft,
+        creditHours: user.creditHours ?? user.chancesLeft ?? 0,
+        chancesLeft: user.creditHours ?? user.chancesLeft ?? 0, // backward compatibility
       },
     });
   } catch (err) {

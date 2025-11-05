@@ -14,11 +14,12 @@ export const createScholarship = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // ✅ Check chances left (only for normal users)
-    if (user.role === "user" && user.chancesLeft <= 0) {
+    // ✅ Check credit hours (only for normal users)
+    const creditHours = user.creditHours ?? user.chancesLeft ?? 0;
+    if (user.role === "user" && creditHours <= 0) {
       return res.status(400).json({
         success: false,
-        message: "No chances left. You cannot submit more applications.",
+        message: "No credit hours remaining. Please make a payment to get 3 credit hours for applications.",
       });
     }
 
@@ -51,17 +52,19 @@ export const createScholarship = async (req, res) => {
       opportunityId: opportunityId || null, // Link to opportunity if provided
     });
 
-    // ✅ Decrease user's chances left
+    // ✅ Decrease user's credit hours (1 credit hour per application)
     if (user.role === "user") {
-      user.chancesLeft -= 1;
+      user.creditHours = (user.creditHours ?? 0) - 1;
+      user.chancesLeft = user.creditHours; // Keep in sync for backward compatibility
       await user.save();
     }
 
     res.status(201).json({
       success: true,
-      message: "Scholarship application submitted successfully",
+      message: "Educational counseling application submitted successfully",
       application,
-      chancesLeft: user.chancesLeft, // return updated chances
+      creditHours: user.creditHours ?? 0,
+      chancesLeft: user.creditHours ?? 0, // return for backward compatibility
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

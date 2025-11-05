@@ -174,10 +174,15 @@ export const verifyPayment = async (req, res) => {
     payment.status = status;
     if (status === "verified") {
       payment.verifiedBy = req.user._id;
-      // Update user's payment status (we can add a field to user model if needed)
-      await User.findByIdAndUpdate(payment.user, {
-        paymentVerified: true,
-      });
+      // Update user's payment status and add 3 credit hours
+      const user = await User.findById(payment.user);
+      if (user) {
+        user.paymentVerified = true;
+        // Add 3 credit hours when payment is verified
+        user.creditHours = (user.creditHours || 0) + 3;
+        user.chancesLeft = user.creditHours; // Keep in sync for backward compatibility
+        await user.save();
+      }
     }
     if (adminNotes) payment.adminNotes = adminNotes;
 
