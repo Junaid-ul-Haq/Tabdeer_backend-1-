@@ -24,7 +24,6 @@ const allowedOrigins = [
 ].filter(Boolean); // Remove undefined values
 
 // CORS configuration with explicit methods and headers
-// CORS configuration with explicit methods and headers
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -40,18 +39,25 @@ app.use(
       // Check if origin is in allowed list
       if (allowedOrigins.includes(origin)) {
         console.log("Origin allowed:", origin);
-        callback(null, true);
-      } else {
-        // For development, allow all origins
-        if (process.env.NODE_ENV !== "production") {
-          console.log("Development mode: allowing origin:", origin);
-          callback(null, true);
-        } else {
-          console.warn("CORS blocked origin:", origin);
-          console.warn("Allowed origins:", allowedOrigins);
-          callback(new Error("Not allowed by CORS"));
-        }
+        return callback(null, true);
       }
+      
+      // ✅ Allow Vercel preview URLs (for deployment previews)
+      if (origin.includes(".vercel.app")) {
+        console.log("Vercel preview URL allowed:", origin);
+        return callback(null, true);
+      }
+      
+      // For development, allow all origins
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Development mode: allowing origin:", origin);
+        return callback(null, true);
+      }
+      
+      // Production mode - block unknown origins
+      console.warn("CORS blocked origin:", origin);
+      console.warn("Allowed origins:", allowedOrigins);
+      callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
