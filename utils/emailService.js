@@ -10,24 +10,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Create transporter (configure based on your email service)
-export const createTransporter = (silent = false) => {
-  const emailUser = process.env.EMAIL_USER || "tadbeerresourcecentre@gmail.com";
+export const createTransporter = () => {
+  const emailUser = process.env.EMAIL_USER || "support@tadbeerresource.com";
   const emailHost = process.env.EMAIL_HOST || "smtp.gmail.com";
   const emailPort = parseInt(process.env.EMAIL_PORT || "587");
   
-  if (!silent) {
-    console.log("📧 Email Configuration:");
-    console.log("  - Host:", emailHost);
-    console.log("  - Port:", emailPort);
-    console.log("  - User:", emailUser);
-    console.log("  - Password:", process.env.EMAIL_PASSWORD ? "***SET***" : "***NOT SET***");
-  }
+  console.log("📧 Email Configuration:");
+  console.log("  - Host:", emailHost);
+  console.log("  - Port:", emailPort);
+  console.log("  - User:", emailUser);
+  console.log("  - Password:", process.env.EMAIL_PASSWORD ? "***SET***" : "***NOT SET***");
   
   // Validate that EMAIL_PASSWORD is set
   if (!process.env.EMAIL_PASSWORD) {
-    if (!silent) {
-      console.error("❌ EMAIL_PASSWORD is not set in environment variables!");
-    }
+    console.error("❌ EMAIL_PASSWORD is not set in environment variables!");
     throw new Error("EMAIL_PASSWORD environment variable is required");
   }
 
@@ -40,75 +36,6 @@ export const createTransporter = (silent = false) => {
       pass: process.env.EMAIL_PASSWORD, // Password for the email account
     },
   });
-};
-
-// Test email connection and return status
-export const testEmailConnection = async () => {
-  try {
-    // Check if required environment variables are set
-    if (!process.env.EMAIL_USER) {
-      return {
-        ready: false,
-        status: "NOT_READY",
-        message: "EMAIL_USER is not set in environment variables",
-        error: "Missing EMAIL_USER",
-      };
-    }
-
-    if (!process.env.EMAIL_PASSWORD) {
-      return {
-        ready: false,
-        status: "NOT_READY",
-        message: "EMAIL_PASSWORD is not set in environment variables",
-        error: "Missing EMAIL_PASSWORD",
-      };
-    }
-
-    // Create transporter (silent mode to avoid duplicate logs)
-    const transporter = createTransporter(true);
-    
-    // Test connection with timeout
-    const verifyPromise = transporter.verify();
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Connection timeout after 10 seconds")), 10000)
-    );
-
-    await Promise.race([verifyPromise, timeoutPromise]);
-    
-    return {
-      ready: true,
-      status: "READY",
-      message: "Email service is ready to send messages",
-      config: {
-        host: process.env.EMAIL_HOST || "smtp.gmail.com",
-        port: process.env.EMAIL_PORT || "587",
-        user: process.env.EMAIL_USER,
-      },
-    };
-  } catch (error) {
-    let errorMessage = "Unknown error";
-    let errorCode = error.code || "UNKNOWN";
-    
-    if (error.code === "EAUTH") {
-      errorMessage = "Authentication failed. Check EMAIL_USER and EMAIL_PASSWORD in .env file";
-    } else if (error.code === "ECONNREFUSED") {
-      errorMessage = "Cannot connect to SMTP server. Check EMAIL_HOST and EMAIL_PORT";
-    } else if (error.code === "ETIMEDOUT" || error.message?.includes("timeout")) {
-      errorMessage = "Connection timeout. Check your internet connection and SMTP server settings";
-    } else if (error.message?.includes("EMAIL_PASSWORD")) {
-      errorMessage = "EMAIL_PASSWORD is not set in environment variables";
-    } else {
-      errorMessage = error.message || "Failed to connect to email server";
-    }
-
-    return {
-      ready: false,
-      status: "NOT_READY",
-      message: errorMessage,
-      error: errorCode,
-      details: error.message,
-    };
-  }
 };
 
 // Send email to user when payment is submitted (waiting for admin approval)
