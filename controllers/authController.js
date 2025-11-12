@@ -242,6 +242,39 @@ export const getUserById = async (req, res) => {
   }
 };
 
+// @desc Get current logged-in user
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profileCompleted: user.profileCompleted,
+        paymentVerified: user.paymentVerified,
+        creditHours: user.creditHours ?? user.chancesLeft ?? 0,
+        chancesLeft: user.creditHours ?? user.chancesLeft ?? 0,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export const completeProfile = async (req, res) => {
   try {
     const { education, experience } = req.body;
@@ -261,6 +294,134 @@ export const completeProfile = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc Delete user completely (Admin only)
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fs = (await import("fs")).default;
+    const path = (await import("path")).default;
+    const { fileURLToPath } = await import("url");
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    // Find user
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Prevent deleting admin users
+    if (user.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Cannot delete admin users",
+      });
+    }
+
+    // Import models
+    const Scholarship = (await import("../models/scholarShipModel.js")).default;
+    const BusinessGrant = (await import("../models/businessGrantModel.js")).default;
+    const Consultation = (await import("../models/consultationModel.js")).default;
+    const Payment = (await import("../models/paymentModel.js")).default;
+
+    // Get all user's data
+    const [scholarships, grants, consultations, payment] = await Promise.all([
+      Scholarship.find({ user: id }),
+      BusinessGrant.find({ user: id }),
+      Consultation.find({ user: id }),
+      Payment.findOne({ user: id }),
+    ]);
+
+    // Delete all files associated with user
+    const filesToDelete = [];
+
+    // User's CNIC files
+    if (user.cnicFront?.filePath) {
+      const filePath = path.join(__dirname, "..", user.cnicFront.filePath.replace("/files/", "uploads/"));
+      if (fs.existsSync(filePath)) filesToDelete.push(filePath);
+    }
+    if (user.cnicBack?.filePath) {
+      const filePath = path.join(__dirname, "..", user.cnicBack.filePath.replace("/files/", "uploads/"));
+      if (fs.existsSync(filePath)) filesToDelete.push(filePath);
+    }
+
+    // Scholarship documents
+    scholarships.forEach((scholarship) => {
+      if (scholarship.documents) {
+        scholarship.documents.forEach((doc) => {
+          if (doc.filePath) {
+            const filePath = path.join(__dirname, "..", doc.filePath.replace("/files/", "uploads/"));
+            if (fs.existsSync(filePath)) filesToDelete.push(filePath);
+          }
+        });
+      }
+    });
+
+    // Grant proposal files
+    grants.forEach((grant) => {
+      if (grant.proposal?.filePath) {
+        const filePath = path.join(__dirname, "..", grant.proposal.filePath.replace("/files/", "uploads/"));
+        if (fs.existsSync(filePath)) filesToDelete.push(filePath);
+      }
+    });
+
+    // Consultation documents
+    consultations.forEach((consultation) => {
+      if (consultation.documents) {
+        consultation.documents.forEach((doc) => {
+          if (doc.filePath) {
+            const filePath = path.join(__dirname, "..", doc.filePath.replace("/files/", "uploads/"));
+            if (fs.existsSync(filePath)) filesToDelete.push(filePath);
+          }
+        });
+      }
+    });
+
+    // Payment screenshot
+    if (payment?.screenshot?.filePath) {
+      const filePath = path.join(__dirname, "..", payment.screenshot.filePath.replace("/files/", "uploads/"));
+      if (fs.existsSync(filePath)) filesToDelete.push(filePath);
+    }
+
+    // Delete all files
+    filesToDelete.forEach((filePath) => {
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log(`✅ Deleted file: ${filePath}`);
+        }
+      } catch (error) {
+        console.error(`❌ Error deleting file ${filePath}:`, error);
+      }
+    });
+
+    // Delete all user's data from database
+    await Promise.all([
+      Scholarship.deleteMany({ user: id }),
+      BusinessGrant.deleteMany({ user: id }),
+      Consultation.deleteMany({ user: id }),
+      Payment.deleteOne({ user: id }),
+    ]);
+
+    // Finally, delete the user
+    await User.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: "User and all associated data deleted successfully",
+    });
+  } catch (error) {
+    console.error("❌ Error deleting user:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 

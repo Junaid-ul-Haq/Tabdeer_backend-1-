@@ -61,7 +61,7 @@ export const createScholarship = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Educational counseling application submitted successfully",
+      message: "Education and guidance application submitted successfully",
       application,
       creditHours: user.creditHours ?? 0,
       chancesLeft: user.creditHours ?? 0, // return for backward compatibility

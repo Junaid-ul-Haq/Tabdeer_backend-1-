@@ -1,6 +1,11 @@
 import Payment from "../models/paymentModel.js";
 import User from "../models/userModel.js";
 import paginate from "../utils/paginate.js";
+import {
+  sendPaymentSubmittedEmail,
+  sendPaymentAcceptedEmail,
+  sendPaymentRejectedEmail,
+} from "../utils/emailService.js";
 
 // @desc Create payment (User)
 export const createPayment = async (req, res) => {
@@ -54,12 +59,28 @@ export const createPayment = async (req, res) => {
       status: "pending",
     });
 
+    // Send email to user when payment is submitted (don't block the response if email fails)
+    try {
+      const user = await User.findById(req.user._id);
+      if (user) {
+        console.log(`📧 [CREATE PAYMENT] Attempting to send payment submitted email to: ${user.email}`);
+        await sendPaymentSubmittedEmail(user, payment);
+        console.log(`✅ [CREATE PAYMENT] Successfully sent payment submitted email to: ${user.email}`);
+      }
+    } catch (emailError) {
+      console.error("❌ [CREATE PAYMENT] Failed to send email to user:", req.user.email || "unknown");
+      console.error("  - Payment ID:", payment._id);
+      console.error("  - Error Message:", emailError.message);
+      // Continue even if email fails - payment is already created
+    }
+
     res.status(201).json({
       success: true,
       message: "Payment submitted successfully. Please wait for admin verification.",
       payment,
     });
   } catch (error) {
+    console.error("❌ [CREATE PAYMENT] Error creating payment:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -172,10 +193,11 @@ export const verifyPayment = async (req, res) => {
     }
 
     payment.status = status;
+    const user = await User.findById(payment.user);
+    
     if (status === "verified") {
       payment.verifiedBy = req.user._id;
       // Update user's payment status and add 3 credit hours
-      const user = await User.findById(payment.user);
       if (user) {
         user.paymentVerified = true;
         // Add 3 credit hours when payment is verified
@@ -187,6 +209,36 @@ export const verifyPayment = async (req, res) => {
     if (adminNotes) payment.adminNotes = adminNotes;
 
     await payment.save();
+
+    // Send email to user based on status (don't block the response if email fails)
+    try {
+      if (user && user.email) {
+        console.log(`📧 [VERIFY PAYMENT] Attempting to send ${status} email to user: ${user.email}`);
+        console.log(`📧 [VERIFY PAYMENT] User details - Name: ${user.name}, Email: ${user.email}, ID: ${user._id}`);
+        if (status === "verified") {
+          await sendPaymentAcceptedEmail(user, payment);
+          console.log(`✅ [VERIFY PAYMENT] Successfully sent payment ACCEPTED email to: ${user.email}`);
+        } else if (status === "rejected") {
+          await sendPaymentRejectedEmail(user, payment);
+          console.log(`✅ [VERIFY PAYMENT] Successfully sent payment REJECTED email to: ${user.email}`);
+        }
+      } else {
+        console.warn("⚠️ [VERIFY PAYMENT] Cannot send email:");
+        console.warn("  - User found:", !!user);
+        console.warn("  - User email exists:", !!user?.email);
+        console.warn("  - Payment ID:", payment._id);
+        console.warn("  - User ID:", payment.user);
+      }
+    } catch (emailError) {
+      console.error("❌ [VERIFY PAYMENT] Failed to send email to user:", user?.email || "unknown");
+      console.error("  - Payment Status:", status);
+      console.error("  - Payment ID:", payment._id);
+      console.error("  - User ID:", payment.user);
+      console.error("  - Error Code:", emailError.code);
+      console.error("  - Error Message:", emailError.message);
+      console.error("  - Error Stack:", emailError.stack);
+      // Continue even if email fails
+    }
 
     res.status(200).json({
       success: true,
